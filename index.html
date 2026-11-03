@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+html,body{margin:0;height:100%;background:#a283c4;overflow:hidden;font-family:sans-serif}
+.scene{position:relative;height:100vh;overflow:hidden}
+.bg{position:absolute;inset:-10%;background:url(image.jpg) center/cover;
+  animation:drift 16s ease-in-out infinite alternate}
+.blob{position:absolute;border-radius:50%;filter:blur(40px);mix-blend-mode:soft-light}
+.b1{width:60vmax;height:60vmax;left:-20%;top:40%;background:#ffe0c0;animation:m1 12s ease-in-out infinite alternate}
+.b2{width:50vmax;height:50vmax;right:-20%;top:-10%;background:#ff9ad5;animation:m2 14s ease-in-out infinite alternate}
+.b3{width:45vmax;height:45vmax;left:10%;bottom:-20%;background:#8a6bd6;animation:m1 10s ease-in-out infinite alternate-reverse}
+.rays{position:absolute;left:50%;top:50%;width:200vmax;height:200vmax;margin:-100vmax;
+  background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.12) 0 6deg,transparent 6deg 20deg);
+  mix-blend-mode:soft-light;animation:spin 60s linear infinite}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.content{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;text-align:center;color:#fff;padding:20px;z-index:5}
+.content h1{font-size:2.4rem;margin:0 0 10px;text-shadow:0 2px 14px rgba(90,40,130,.7);animation:float 4s ease-in-out infinite}
+.content p{font-size:1.1rem;max-width:500px;text-shadow:0 2px 10px rgba(90,40,130,.7);transition:opacity .3s}
+.pic{width:170px;height:170px;border-radius:50%;object-fit:cover;border:4px solid #fff;
+  margin-bottom:15px;transition:.4s;cursor:pointer;animation:float 5s ease-in-out infinite}
+.pic:hover{transform:rotate(6deg) scale(1.1)}
+.btns{display:flex;gap:10px;margin:20px 0;flex-wrap:wrap;justify-content:center}
+button{padding:10px 22px;border:0;border-radius:25px;font-size:1rem;
+  background:rgba(255,255,255,.88);color:#7a4fa3;cursor:pointer;transition:.3s}
+button:hover{transform:scale(1.08);background:#fff}
+@keyframes drift{0%{transform:scale(1.05) translate(-2%,-1%) rotate(-.6deg)}
+  100%{transform:scale(1.18) translate(2%,2%) rotate(.6deg)}}
+@keyframes m1{to{transform:translate(25%,-20%) scale(1.2)}}
+@keyframes m2{to{transform:translate(-25%,25%) scale(.85)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+</style></head>
+<body>
+<div class="scene">
+  <div class="bg"></div>
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="rays"></div>
+  <canvas id="c"></canvas>
+  <div class="content">
+    <img class="pic" src="photo.jpg" alt="" onerror="this.style.display='none'" onclick="alert('هلا! 👋')">
+    <h1>عنوان موقعي</h1>
+    <p id="text">هنا تكتب النص اللي تبيه.</p>
+    <div class="btns">
+      <button onclick="changeText('أنا أحب البرمجة 💻')">من أنا</button>
+      <button onclick="changeText('هواياتي: الرسم والقراءة 🎨')">هواياتي</button>
+      <button onclick="changeText('تواصل معي عبر الإيميل 📩')">تواصل</button>
+    </div>
+  </div>
+</div>
+<script>
+function changeText(t){const p=document.getElementById("text");p.style.opacity=0;
+  setTimeout(()=>{p.textContent=t;p.style.opacity=1},250)}
+
+const c=document.getElementById("c"),x=c.getContext("2d");
+function size(){c.width=innerWidth;c.height=innerHeight}
+size();addEventListener("resize",size);
+const R=Math.random;
+
+// نجوم لامعة (بيضاء وذهبية)
+const stars=Array.from({length:45},()=>({x:R()*innerWidth,y:R()*innerHeight,
+  r:R()*4+3,t:R()*7,s:R()*.04+.02,gold:R()>.5}));
+// فقاعات تطلع
+const orbs=Array.from({length:18},()=>({x:R()*innerWidth,y:R()*innerHeight,
+  r:R()*22+8,vy:R()*.6+.2,t:R()*7}));
+// غبار لامع
+const dust=Array.from({length:60},()=>({x:R()*innerWidth,y:R()*innerHeight,
+  r:R()*1.8+.6,vx:R()*.5-.25,vy:R()*.5-.25,t:R()*7}));
+let shoot=[];
+
+function drawStar(s){
+  const a=.4+Math.abs(Math.sin(s.t))*.6, k=.6+Math.abs(Math.sin(s.t))*.6;
+  x.save();x.translate(s.x,s.y);x.globalAlpha=a;
+  x.fillStyle=s.gold?"#fff1a0":"#fff";
+  x.shadowColor=s.gold?"#ff9d00":"#c03cff";x.shadowBlur=s.r*4;
+  x.beginPath();
+  for(let i=0;i<8;i++){
+    const rad=i%2?s.r*.4*k:s.r*3*k, an=i*Math.PI/4;
+    x.lineTo(Math.cos(an)*rad,Math.sin(an)*rad);
+  }
+  x.closePath();x.fill();x.restore();
+}
+function loop(){
+  x.clearRect(0,0,c.width,c.height);
+  for(const d of dust){d.t+=.03;d.x+=d.vx;d.y+=d.vy;
+    if(d.x<0)d.x=c.width;if(d.x>c.width)d.x=0;if(d.y<0)d.y=c.height;if(d.y>c.height)d.y=0;
+    x.globalAlpha=.4+Math.sin(d.t)*.4;x.fillStyle="#fff";
+    x.beginPath();x.arc(d.x,d.y,d.r,0,7);x.fill()}
+  for(const o of orbs){o.t+=.02;o.y-=o.vy;o.x+=Math.sin(o.t)*.6;
+    if(o.y<-40){o.y=c.height+40;o.x=R()*c.width}
+    const g=x.createRadialGradient(o.x-o.r/3,o.y-o.r/3,1,o.x,o.y,o.r);
+    g.addColorStop(0,"rgba(255,255,255,.7)");g.addColorStop(1,"rgba(255,255,255,.08)");
+    x.globalAlpha=1;x.fillStyle=g;x.strokeStyle="rgba(255,255,255,.6)";
+    x.beginPath();x.arc(o.x,o.y,o.r,0,7);x.fill();x.stroke()}
+  for(const s of stars){s.t+=s.s;drawStar(s)}
+  if(R()<.012)shoot.push({x:R()*c.width+100,y:R()*c.height*.4,l:0});
+  shoot=shoot.filter(m=>m.l<1);
+  for(const m of shoot){m.l+=.02;m.x-=14;m.y+=7;
+    const g=x.createLinearGradient(m.x,m.y,m.x+120,m.y-60);
+    g.addColorStop(0,"rgba(255,255,255,1)");g.addColorStop(1,"rgba(255,255,255,0)");
+    x.globalAlpha=1-m.l;x.strokeStyle=g;x.lineWidth=3;x.shadowColor="#fff";x.shadowBlur=10;
+    x.beginPath();x.moveTo(m.x,m.y);x.lineTo(m.x+120,m.y-60);x.stroke();x.shadowBlur=0}
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body></html>
